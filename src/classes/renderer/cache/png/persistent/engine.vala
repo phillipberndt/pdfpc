@@ -38,6 +38,14 @@ namespace pdfpc.Renderer.Cache {
 
         protected string cache_directory;
 
+        /**
+         * Helper method for cache prepopulation, if the same caches are to be
+         * populated with different resolutions.
+         */
+        public static void reset_instance_counter() {
+            cache_instance_counter = 0;
+        }
+
         public Engine( Metadata.Pdf metadata ) {
             base( metadata );
 
