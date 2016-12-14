@@ -621,6 +621,8 @@ namespace pdfpc {
                 if (this.overview_shown && this.overview.key_press_event(key))
                     return true;
 
+                if(key.keyval == (uint)Gdk.Key.Escape) return false;
+
                 var action = this.keyBindings.get(new KeyDef(key.keyval,
                     key.state & this.accepted_key_mods));
 
