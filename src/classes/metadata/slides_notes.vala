@@ -72,7 +72,7 @@ namespace pdfpc {
                 }
             }
 
-            return builder.str;
+            return builder.str.replace("[", "\\[").replace("]", "\\]");
         }
 
         /**
@@ -89,9 +89,10 @@ namespace pdfpc {
                 int first_newline = notes_sections[notes_section].index_of("\n");
                 var header_string = notes_sections[notes_section][0:first_newline];
                 var notes = notes_sections[notes_section][first_newline + 1:notes_sections[notes_section].length];
+                var notes_unescaped = notes.replace("\\[", "[").replace("\\]", "]");
 
                 int slide_number = int.parse(header_string);
-                set_note(notes, slide_number - 1);
+                set_note(notes_unescaped, slide_number - 1);
 
             }
         }
