@@ -70,11 +70,17 @@ namespace pdfpc {
             for (int i = 0; i < notes.length; ++i) {
                 if (notes[i] != null) {
                     builder.append(@"### $(i+1)\n");
-                    builder.append(notes[i]);
+
+                    for (int j = 0; j < notes[i].length; j++) {
+                        if (notes[i].data[j] == '[' || notes[i].data[j] == ']' || notes[i].data[j] == '\\' | notes[i].data[j] == '#') {
+                            builder.append_c('\\');
+                        }
+                        builder.append_c((char)notes[i].data[j]);
+                    }
                 }
             }
 
-            return builder.str.replace("[", "\\[").replace("]", "\\]");
+            return builder.str;
         }
 
         /**
@@ -91,10 +97,21 @@ namespace pdfpc {
                 int first_newline = notes_sections[notes_section].index_of("\n");
                 var header_string = notes_sections[notes_section][0:first_newline];
                 var notes = notes_sections[notes_section][first_newline + 1:notes_sections[notes_section].length];
-                var notes_unescaped = notes.replace("\\[", "[").replace("\\]", "]");
+                var notes_unescaped = new GLib.StringBuilder();
+                for (int j = 0; j < notes.length; j++) {
+                    if(notes[j] == '\\') {
+                        j++;
+                        if (j == notes.length) {
+                            // This should not happen for well-formed notes,
+                            // but users could have done this manually.
+                            break;
+                        }
+                    }
+                    notes_unescaped.append_c(notes[j]);
+                }
 
                 int slide_number = int.parse(header_string);
-                set_note(notes_unescaped, slide_number - 1);
+                set_note(notes_unescaped.str, slide_number - 1);
 
             }
         }
