@@ -331,6 +331,13 @@ namespace pdfpc {
          * the window surface.
          */
         public override bool draw(Cairo.Context cr) {
+			// Scaling factor due to cache-reuse of the cache with the largest renderer
+			double scaling_factor = this.renderer.width * 1.0 / this.current_slide.get_width();
+			if(scaling_factor - 1 > 1e-5 || scaling_factor - 1 < -1e-5) {
+				cr.scale(scaling_factor, scaling_factor);
+				cr.get_source().set_filter(Cairo.Filter.BILINEAR);
+			}
+
             cr.scale((1.0/this.gdk_scale), (1.0/this.gdk_scale));
             cr.set_source_surface(this.current_slide, 0, 0);
             cr.rectangle(0, 0, this.current_slide.get_width(), this.current_slide.get_height());

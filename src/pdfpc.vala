@@ -65,6 +65,7 @@ namespace pdfpc {
             { "switch-screens", 's', 0, 0, ref Options.display_switch, "Switch the presentation and the presenter screen.", null },
             { "single-screen", 'S', 0, 0, ref Options.single_screen, "Force to use only one screen", null },
             { "start-time", 't', 0, OptionArg.STRING, ref Options.start_time, "Start time of the presentation to be used as a countdown. (Format: HH:MM (24h))", "T" },
+            { "single-cache", 0, 0, 0, ref Options.single_cache, "Use only one renderer/cache and scale down to smaller views", null },
             { "version", 'v', 0, 0, ref Options.version, "Print the version string and copyright statement", null },
             { "windowed", 'w', 0, 0, ref Options.windowed, "Run in windowed mode (devel tool)", null},
             { "disable-compression", 'z', 0, 0, ref Options.disable_cache_compression, "Disable the compression of slide images to trade memory consumption for speed. (Avg. factor 30)", null },

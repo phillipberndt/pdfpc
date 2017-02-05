@@ -157,6 +157,11 @@ namespace pdfpc {
          */
         public static bool version = false;
 
+        /**
+         * Serve from single cache
+         */
+        public static bool single_cache = false;
+
         public class BindTuple {
             public string type;
             public uint keyCode;

@@ -29,6 +29,11 @@ namespace pdfpc {
      */
     public class Renderer.Pdf : Object {
         /**
+         * The instance of the class with the largest size
+         */
+         private static Renderer.Pdf? max_size_instance;
+
+        /**
          * Metadata object to render slides for
          */
         public Metadata.Pdf metadata { get; protected set; }
@@ -77,6 +82,11 @@ namespace pdfpc {
             // Calculate the scaling factor needed.
             this.scaling_factor = Math.fmax(width / metadata.get_page_width(),
                 height / metadata.get_page_height());
+
+            // Hack for singleton caching
+            if(max_size_instance == null || int.max(max_size_instance.height, max_size_instance.width) < int.max(height, width)) {
+                max_size_instance = this;
+            }
         }
 
         /**
@@ -97,9 +107,9 @@ namespace pdfpc {
             }
 
             // If caching is enabled check for the page in the cache
-            if (this.cache != null) {
+            if ((Options.single_cache ? max_size_instance : this).cache != null) {
                 Cairo.ImageSurface cache_content;
-                if ((cache_content = this.cache.retrieve(slide_number)) != null) {
+                if ((cache_content = (Options.single_cache ? max_size_instance : this).cache.retrieve(slide_number)) != null) {
                     return cache_content;
                 }
             }
@@ -123,7 +133,8 @@ namespace pdfpc {
             page.render(cr);
 
             // If the cache is enabled store the newly rendered pixmap
-            if (this.cache != null) {
+            // But only for the instance with maximal size (Hack'ish for now)
+            if (this.cache != null && (!Options.single_cache || this == max_size_instance)) {
                 this.cache.store( slide_number, surface );
             }
 
