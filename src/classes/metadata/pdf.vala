@@ -113,6 +113,11 @@ namespace pdfpc.Metadata {
         public int font_size { get { return _font_size; } set { _font_size = value; } }
 
         /**
+         * A cache for rendered slides, shared among the Renderer.Pdf instances
+         */
+        public pdfpc.Renderer.RendererCache renderer_cache { get; protected set; }
+
+        /**
          * Parse the given pdfpc file
          */
         void parse_pdfpc_file(out string? skip_line) {
@@ -428,6 +433,8 @@ namespace pdfpc.Metadata {
             if(skips_by_user) {
                 parse_skip_line(skip_line);
             }
+
+            this.renderer_cache = new pdfpc.Renderer.RendererCache();
 
             // Prepopulate notes from annotations
             notes_from_document();

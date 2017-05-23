@@ -284,7 +284,7 @@ namespace pdfpc.Window {
                 GLib.printerr("Warning: failed to set CSS for auto-sized bottom controls.\n");
             }
 
-            this.overview = new Overview(this.metadata, this.presentation_controller, this);
+            this.overview = new Overview(this.metadata, this.presentation_controller, this, this.gdk_scale);
             this.overview.vexpand = true;
             this.overview.hexpand = true;
             this.overview.set_n_slides(this.presentation_controller.user_n_slides);
@@ -414,15 +414,25 @@ namespace pdfpc.Window {
             int current_user_slide_number = this.presentation_controller.current_user_slide_number;
             try {
                 this.current_view.display(current_slide_number);
+                this.current_view.preload(current_slide_number + 1);
+                this.current_view.preload(current_slide_number - 1);
                 this.next_view.display(this.metadata.user_slide_to_real_slide(
                     current_user_slide_number + 1));
+                this.next_view.preload(this.metadata.user_slide_to_real_slide(
+                    current_user_slide_number + 2));
+                this.next_view.preload(this.metadata.user_slide_to_real_slide(
+                    current_user_slide_number));
                 if (this.presentation_controller.skip_next()) {
                     this.strict_next_view.display(current_slide_number + 1, true);
+                    this.strict_next_view.preload(current_slide_number + 2);
+                    this.strict_next_view.preload(current_slide_number);
                 } else {
                     this.strict_next_view.fade_to_black();
                 }
                 if (this.presentation_controller.skip_previous()) {
                     this.strict_prev_view.display(current_slide_number - 1, true);
+                    this.strict_prev_view.preload(current_slide_number - 2);
+                    this.strict_prev_view.preload(current_slide_number);
                 } else {
                     this.strict_prev_view.fade_to_black();
                 }
@@ -456,7 +466,11 @@ namespace pdfpc.Window {
         public void goto_page(int page_number) {
             try {
                 this.current_view.display(page_number);
+                this.current_view.preload(page_number + 1);
+                this.current_view.preload(page_number - 1);
                 this.next_view.display(page_number + 1);
+                this.next_view.preload(page_number + 2);
+                this.next_view.preload(page_number);
             } catch( Renderer.RenderError e ) {
                 GLib.printerr("The pdf page %d could not be rendered: %s\n", page_number, e.message);
                 Process.exit(1);

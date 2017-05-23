@@ -1113,6 +1113,8 @@ namespace pdfpc {
          */
         protected void controllables_update() {
             this.update_request();
+
+            this.metadata.renderer_cache.invalidate_caches(this.metadata.user_slide_to_real_slide(this.current_user_slide_number - 1) - 1, this.metadata.user_slide_to_real_slide(this.current_user_slide_number + 1) + 1);
         }
 
         /**

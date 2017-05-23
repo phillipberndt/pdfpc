@@ -106,8 +106,6 @@ namespace pdfpc {
                         this.current_slide_number, e.message);
                     Process.exit(1);
                 }
-
-                // TODO Start caching XXX
             });
 
             if (clickable_links) {
@@ -225,6 +223,21 @@ namespace pdfpc {
             this.queue_draw();
 
             this.entering_slide(this.current_slide_number);
+        }
+
+        /**
+         * Asynchronously preload a given slide for this view.
+         */
+        public void preload(int slide_number) {
+            Idle.add(() => {
+                try {
+                    this.renderer.render_to_surface(slide_number);
+                }
+                catch(Renderer.RenderError.SLIDE_DOES_NOT_EXIST e) {
+                    // Ignore.
+                }
+                return false;
+            });
         }
 
         /**

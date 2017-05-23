@@ -109,6 +109,8 @@ namespace pdfpc.Window {
                     this.presentation_controller.current_slide_number, e.message );
                 Process.exit(1);
             }
+            this.view.preload(this.presentation_controller.current_slide_number + 1);
+            this.view.preload(this.presentation_controller.current_slide_number - 1);
         }
     }
 }

@@ -62,11 +62,11 @@ namespace pdfpc {
          * pdf document the renderspace is filled up completely cutting of a
          * part of the pdf document.
          */
-        public Pdf(Metadata.Pdf metadata, int width, int height, Metadata.Area area) {
+        public Pdf(Metadata.Pdf metadata, int width, int height,
+                Metadata.Area area) {
             this.metadata = metadata;
             this.width = width;
             this.height = height;
-
             this.area = area;
 
             // Calculate the scaling factor needed.
@@ -91,6 +91,13 @@ namespace pdfpc {
                     "The requested slide '%i' does not exist.", slide_number);
             }
 
+            // Check if this page is in the cache already
+            var cache_view = metadata.renderer_cache.get_view(this.width, this.height, slide_number);
+            if(cache_view.surface != null) {
+                var surface = cache_view.surface;
+                return surface;
+            }
+
             // Retrieve the Poppler.Page for the page to render
             var page = metadata.get_document().get_page(slide_number);
 
@@ -108,6 +115,8 @@ namespace pdfpc {
             cr.translate(-metadata.get_horizontal_offset(this.area),
                 -metadata.get_vertical_offset(this.area));
             page.render(cr);
+
+            cache_view.surface = surface;
 
             return surface;
         }

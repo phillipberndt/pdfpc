@@ -59,12 +59,6 @@ namespace pdfpc.Window {
         protected int target_height;
 
         /**
-         * We render the previews one at a time in idle times.
-         */
-        protected int next_undone_preview = 0;
-        protected uint idle_id = 0;
-
-        /**
          * The presentation controller
          */
         protected PresentationController presentation_controller;
@@ -80,6 +74,11 @@ namespace pdfpc.Window {
          */
         protected int max_width = -1;
         protected int max_height = -1;
+
+        /**
+         * GDK scale factor
+         */
+        protected int gdk_scale;
 
         /**
          * The currently selected slide.
@@ -120,7 +119,7 @@ namespace pdfpc.Window {
         /**
          * Constructor
          */
-        public Overview( Metadata.Pdf metadata, PresentationController presentation_controller, Presenter presenter ) {
+        public Overview( Metadata.Pdf metadata, PresentationController presentation_controller, Presenter presenter, int gdk_scale ) {
             this.get_style_context().add_class("overviewWindow");
 
             this.slides = new Gtk.ListStore(1, typeof(int));
@@ -128,7 +127,6 @@ namespace pdfpc.Window {
             this.slides_view.selection_mode = Gtk.SelectionMode.SINGLE;
             this.slides_view.halign = Gtk.Align.CENTER;
             this.renderer = new CellRendererHighlight();
-            this.renderer.metadata = metadata;
             Gtk.StyleContext style_context = this.get_style_context();
             Pango.FontDescription font_description;
             style_context.get(style_context.get_state(), "font", out font_description, null);
@@ -151,6 +149,7 @@ namespace pdfpc.Window {
             this.slides_view.selection_changed.connect(this.on_selection_changed);
             this.key_press_event.connect((event) => this.slides_view.key_press_event(event));
 
+            this.gdk_scale = gdk_scale;
         }
 
         public void set_available_space(int width, int height) {
@@ -245,8 +244,7 @@ namespace pdfpc.Window {
 
             this.last_structure_n_slides = this.n_slides;
 
-            this.renderer.slide_width = this.target_width;
-            this.renderer.slide_height = this.target_height;
+            this.renderer.set_source(this.metadata, this.target_width, this.target_height, this.gdk_scale, this.presentation_controller);
 
             this.slides.clear();
             var iter = Gtk.TreeIter();
@@ -357,9 +355,39 @@ namespace pdfpc.Window {
         public int slide_id { get; set; }
 
         public Pango.FontDescription font_description { get; set; }
-        public Metadata.Pdf metadata { get; set; }
-        public int slide_width { get; set; }
-        public int slide_height { get; set; }
+        public Metadata.Pdf metadata { get; protected set; }
+        public int slide_width { get; protected set; }
+        public int slide_height { get; protected set; }
+
+        protected Renderer.Pdf renderer;
+
+        public void set_source(Metadata.Pdf metadata, int slide_width, int slide_height, int gdk_scale,
+                PresentationController presentation_controller) {
+            this.slide_width = slide_width;
+            this.slide_height = slide_height;
+            this.metadata = metadata;
+            this.renderer = new Renderer.Pdf(metadata, (int)(slide_width*(1.0/gdk_scale)),
+                    (int)(slide_height*(1.0/gdk_scale)), Metadata.Area.CONTENT);
+
+            // Protect the cache for this resolution (i.e., never remove slides from it)
+            metadata.renderer_cache.protect_resolution(this.renderer.width, this.renderer.height);
+
+            // Prerender all slides
+            uint total_slides = metadata.get_slide_count();
+            for(int i=0; i<total_slides; i++) {
+                var j = i;
+                Idle.add(() => {
+                    try {
+                        this.renderer.render_to_surface(j);
+                    }
+                    catch(Renderer.RenderError.SLIDE_DOES_NOT_EXIST e) {
+                        // Ignore
+                    }
+                    return false;
+                });
+            }
+        }
+
 
         public override void get_size(Gtk.Widget widget, Gdk.Rectangle? cell_area,
                                       out int x_offset, out int y_offset,
@@ -373,16 +401,13 @@ namespace pdfpc.Window {
         public override void render(Cairo.Context cr, Gtk.Widget widget,
                                     Gdk.Rectangle background_area, Gdk.Rectangle cell_area,
                                     Gtk.CellRendererState flags) {
-            // nothing to show
-            cr.set_source_rgba(0.5, 0.5, 0.5, 1);
-            cr.rectangle(cell_area.x, cell_area.y, cell_area.width, cell_area.height);
-            cr.fill();
-            //var slide_to_fill = this.cache.retrieve(metadata.user_slide_to_real_slide(this.slide_id));
-            //double scale_factor = (double)slide_width/slide_to_fill.get_width();
-            //cr.scale(scale_factor, scale_factor);
-            //cr.set_source_surface(slide_to_fill, (double)cell_area.x/scale_factor, (double)cell_area.y/scale_factor);
-            //cr.paint();
-            //cr.scale(1.0/scale_factor, 1.0/scale_factor);
+            // show slide
+            var slide_to_fill = this.renderer.render_to_surface(metadata.user_slide_to_real_slide(this.slide_id));
+            double scale_factor = (double)slide_width/slide_to_fill.get_width();
+            cr.scale(scale_factor, scale_factor);
+            cr.set_source_surface(slide_to_fill, (double)cell_area.x/scale_factor, (double)cell_area.y/scale_factor);
+            cr.paint();
+            cr.scale(1.0/scale_factor, 1.0/scale_factor);
 
             if ((flags & Gtk.CellRendererState.SELECTED) == 0) {
                 cr.rectangle(cell_area.x, cell_area.y, cell_area.width, cell_area.height);
