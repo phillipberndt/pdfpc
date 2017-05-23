@@ -65,13 +65,6 @@ namespace pdfpc.Window {
         protected uint idle_id = 0;
 
         /**
-         * The cache we get the images from. It is a reference because the user
-         * can deactivate the cache on the command line. In this case we show
-         * just slide numbers, which is not really so much useful.
-         */
-        protected Renderer.Cache.Base? cache = null;
-
-        /**
          * The presentation controller
          */
         protected PresentationController presentation_controller;
@@ -264,17 +257,6 @@ namespace pdfpc.Window {
         }
 
         /**
-         * Gives the cache to retrieve the images from. The caching process
-         * itself should already be finished.
-         */
-        public void set_cache(Renderer.Cache.Base cache) {
-            this.cache = cache;
-            this.renderer.cache = cache;
-            // force redraw if the cache is there
-            this.slides_view.queue_draw();
-        }
-
-        /**
          * Set the number of slides. If it is different to what we know, it
          * triggers a rebuilding of the widget.
          */
@@ -374,7 +356,6 @@ namespace pdfpc.Window {
     class CellRendererHighlight : Gtk.CellRenderer {
         public int slide_id { get; set; }
 
-        public Renderer.Cache.Base? cache { get; set; }
         public Pango.FontDescription font_description { get; set; }
         public Metadata.Pdf metadata { get; set; }
         public int slide_width { get; set; }
@@ -393,18 +374,15 @@ namespace pdfpc.Window {
                                     Gdk.Rectangle background_area, Gdk.Rectangle cell_area,
                                     Gtk.CellRendererState flags) {
             // nothing to show
-            if (cache == null) {
-                cr.set_source_rgba(0.5, 0.5, 0.5, 1);
-                cr.rectangle(cell_area.x, cell_area.y, cell_area.width, cell_area.height);
-                cr.fill();
-            } else {
-                var slide_to_fill = this.cache.retrieve(metadata.user_slide_to_real_slide(this.slide_id));
-                double scale_factor = (double)slide_width/slide_to_fill.get_width();
-                cr.scale(scale_factor, scale_factor);
-                cr.set_source_surface(slide_to_fill, (double)cell_area.x/scale_factor, (double)cell_area.y/scale_factor);
-                cr.paint();
-                cr.scale(1.0/scale_factor, 1.0/scale_factor);
-            }
+            cr.set_source_rgba(0.5, 0.5, 0.5, 1);
+            cr.rectangle(cell_area.x, cell_area.y, cell_area.width, cell_area.height);
+            cr.fill();
+            //var slide_to_fill = this.cache.retrieve(metadata.user_slide_to_real_slide(this.slide_id));
+            //double scale_factor = (double)slide_width/slide_to_fill.get_width();
+            //cr.scale(scale_factor, scale_factor);
+            //cr.set_source_surface(slide_to_fill, (double)cell_area.x/scale_factor, (double)cell_area.y/scale_factor);
+            //cr.paint();
+            //cr.scale(1.0/scale_factor, 1.0/scale_factor);
 
             if ((flags & Gtk.CellRendererState.SELECTED) == 0) {
                 cr.rectangle(cell_area.x, cell_area.y, cell_area.width, cell_area.height);

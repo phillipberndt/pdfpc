@@ -75,8 +75,6 @@ namespace pdfpc.Window {
          */
         protected Gtk.Entry slide_progress;
 
-        protected Gtk.ProgressBar prerender_progress;
-
         /**
          * Indication that the slide is blanked (faded to black)
          */
@@ -254,22 +252,6 @@ namespace pdfpc.Window {
             // 7 chars (i.e. maximal 999/999 for displaying)
             this.slide_progress.width_chars = 7;
 
-            this.prerender_progress = new Gtk.ProgressBar();
-            this.prerender_progress.name = "prerenderProgress";
-            this.prerender_progress.show_text = true;
-
-            // Don't display prerendering text if the user has disabled
-            // it, but still create the control to ensure the layout
-            // doesn't change.
-            if (Options.disable_caching) {
-                this.prerender_progress.text = "";
-            } else {
-                this.prerender_progress.text = "Prerendering...";
-            }
-            this.prerender_progress.set_ellipsize(Pango.EllipsizeMode.END);
-            this.prerender_progress.no_show_all = true;
-            this.prerender_progress.valign = Gtk.Align.END;
-
             int icon_height = (int)Math.round(bottom_height*0.9);;
 
             this.blank_icon = this.load_icon("blank.svg", icon_height);
@@ -308,14 +290,6 @@ namespace pdfpc.Window {
             this.overview.set_n_slides(this.presentation_controller.user_n_slides);
             this.presentation_controller.set_overview(this.overview);
             this.presentation_controller.register_controllable(this);
-
-            // Enable the render caching if it hasn't been forcefully disabled.
-            if (!Options.disable_caching) {
-                this.current_view.get_renderer().cache = Renderer.Cache.create(metadata);
-                this.next_view.get_renderer().cache = Renderer.Cache.create(metadata);
-                this.strict_next_view.get_renderer().cache = Renderer.Cache.create(metadata);
-                this.strict_prev_view.get_renderer().cache = Renderer.Cache.create(metadata);
-            }
 
             Gtk.Box slide_views = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 4);
 
@@ -366,7 +340,6 @@ namespace pdfpc.Window {
             this.timer.valign = Gtk.Align.END;
 
             var progress_alignment = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 0);
-            progress_alignment.pack_start(this.prerender_progress);
             progress_alignment.pack_end(this.slide_progress, false);
 
             bottom_row.pack_start(status);
@@ -569,27 +542,6 @@ namespace pdfpc.Window {
         public void hide_overview() {
             this.slide_stack.set_visible_child_name("slides");
             this.overview.ensure_structure();
-        }
-
-        /**
-         * Take a cache observer and register it with all prerendering Views
-         * shown on the window.
-         *
-         * Furthermore it is taken care of to add the cache observer to this window
-         * for display, as it is a Image widget after all.
-         */
-        public void set_cache_observer(CacheStatus observer) {
-            observer.monitor_view(this.current_view);
-            observer.monitor_view(this.next_view);
-
-            observer.update_progress.connect(this.prerender_progress.set_fraction);
-            observer.update_complete.connect(this.prerender_finished);
-            this.prerender_progress.show();
-        }
-
-        public void prerender_finished() {
-            this.prerender_progress.opacity = 0;  // hide() causes a flash for re-layout.
-            this.overview.set_cache(this.next_view.get_renderer().cache);
         }
 
         /**

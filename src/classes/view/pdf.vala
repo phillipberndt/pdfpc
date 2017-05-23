@@ -56,24 +56,6 @@ namespace pdfpc {
         }
 
         /**
-         * Signal emitted every time a precached slide has been created
-         *
-         * This signal should be emitted slide_count number of times during a
-         * precaching cylce.
-         */
-        public signal void slide_prerendered();
-
-        /**
-         * Signal emitted when the precaching cycle is complete
-         */
-        public signal void prerendering_completed();
-
-        /**
-         * Signal emitted when the precaching cycle just started
-         */
-        public signal void prerendering_started();
-
-        /**
          * The currently displayed slide
          */
         protected int current_slide_number;
@@ -125,14 +107,7 @@ namespace pdfpc {
                     Process.exit(1);
                 }
 
-                // Start the prerender cycle if the renderer supports caching
-                // and the used cache engine allows prerendering.
-                // Executing the cycle here to ensure it is executed within the
-                // Gtk event loop. If it is not proper Gdk thread handling is
-                // impossible.
-                if (renderer.cache != null && renderer.cache.allows_prerendering()) {
-                    this.register_prerendering();
-                }
+                // TODO Start caching XXX
             });
 
             if (clickable_links) {
@@ -193,56 +168,6 @@ namespace pdfpc {
                 metadata.get_page_height()) * requisition.height);
 
             return gdk_rectangle;
-        }
-
-        /**
-         * Start a thread to prerender all slides this view might display at
-         * some time.
-         *
-         * This method may only be called from within the Gtk event loop, as
-         * thread handling is borked otherwise.
-         */
-        protected void register_prerendering() {
-            // The pointer is needed to keep track of the slide progress inside
-            // the prerender function
-            int* i = null;
-            // The page_count will be transfered into the lamda function as
-            // well.
-            var page_count = this.get_renderer().metadata.get_slide_count();
-
-            this.prerendering_started();
-
-            Idle.add(() => {
-                if (i == null) {
-                    i = malloc(sizeof(int));
-                    *i = 0;
-                }
-
-                // We do not care about the result, as the
-                // rendering function stores the rendered
-                // pixmap in the cache if it is enabled. This
-                // is exactly what we want.
-                try {
-                    this.get_renderer().render_to_surface(*i);
-                } catch(Renderer.RenderError e) {
-                    GLib.printerr("Could not render page '%i' while pre-rendering: %s\n", *i, e.message);
-                    Process.exit(1);
-                }
-
-                // Inform possible observers about the cached slide
-                this.slide_prerendered();
-
-                // Increment one slide for each call and stop the loop if we
-                // have reached the last slide
-                *i = *i + 1;
-                if (*i >= page_count) {
-                    this.prerendering_completed();
-                    free(i);
-                    return false;
-                } else {
-                    return true;
-                }
-            });
         }
 
         /**

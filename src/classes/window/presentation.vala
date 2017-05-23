@@ -69,10 +69,6 @@ namespace pdfpc.Window {
                 Options.black_on_end, true, this.presentation_controller, this.gdk_scale, out scale_rect
             );
 
-            if (!Options.disable_caching) {
-                this.view.get_renderer().cache = Renderer.Cache.create(metadata);
-            }
-
             this.add(fixed_layout);
             fixed_layout.put(this.view, scale_rect.x, scale_rect.y);
 
@@ -113,17 +109,6 @@ namespace pdfpc.Window {
                     this.presentation_controller.current_slide_number, e.message );
                 Process.exit(1);
             }
-        }
-
-        /**
-         * Set the cache observer for the Views on this window
-         *
-         * This method takes care of registering all Prerendering Views used by
-         * this window correctly with the CacheStatus object to provide acurate
-         * cache status measurements.
-         */
-        public void set_cache_observer(CacheStatus observer) {
-            observer.monitor_view(this.view);
         }
     }
 }

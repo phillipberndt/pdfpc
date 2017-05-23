@@ -217,22 +217,6 @@ namespace pdfpc {
                 case "current-size":
                     Options.current_size = int.parse(fields[2]);
                     break;
-                case "disable-caching":
-                    bool disable_caching = bool.parse(fields[2]);
-                    // only propagate value, it it's true
-                    // pushing false makes no sense
-                    if (disable_caching) {
-                        Options.disable_caching = true;
-                    }
-                    break;
-                case "disable-compression":
-                    bool disable_compression = bool.parse(fields[2]);
-                    // only propagate value, it it's true
-                    // pushing false makes no sense
-                    if (disable_compression) {
-                        Options.disable_cache_compression = true;
-                    }
-                    break;
                 case "next-height":
                     Options.next_height = int.parse(fields[2]);
                     break;

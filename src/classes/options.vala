@@ -53,23 +53,6 @@ namespace pdfpc {
         public static bool windowed = false;
 
         /**
-         * Commandline option which allows the complete disabling of slide caching
-         */
-        public static bool disable_caching = false;
-
-        /**
-         * Commandline option to disable the compression of cached slides. This
-         * trades speed for memory. A lot of memory ;) It's about factor 30
-         * bigger for normal presentations.
-         */
-        public static bool disable_cache_compression = false;
-
-        /**
-         * Commandline option to persist the PNG cache to disk.
-         */
-        public static bool persist_cache = false;
-
-        /**
          * Commandline option to disable the auto detection of overlay slides
          */
         public static bool disable_auto_grouping = false;

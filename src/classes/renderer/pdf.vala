@@ -54,11 +54,6 @@ namespace pdfpc {
         protected Metadata.Area area;
 
         /**
-         * Cache store to be used
-         */
-        public Renderer.Cache.Base? cache { get; set; default = null; }
-
-        /**
          * Base constructor taking a pdf metadata object as well as the desired
          * render width and height as parameters.
          *
@@ -96,14 +91,6 @@ namespace pdfpc {
                     "The requested slide '%i' does not exist.", slide_number);
             }
 
-            // If caching is enabled check for the page in the cache
-            if (this.cache != null) {
-                Cairo.ImageSurface cache_content;
-                if ((cache_content = this.cache.retrieve(slide_number)) != null) {
-                    return cache_content;
-                }
-            }
-
             // Retrieve the Poppler.Page for the page to render
             var page = metadata.get_document().get_page(slide_number);
 
@@ -121,11 +108,6 @@ namespace pdfpc {
             cr.translate(-metadata.get_horizontal_offset(this.area),
                 -metadata.get_vertical_offset(this.area));
             page.render(cr);
-
-            // If the cache is enabled store the newly rendered pixmap
-            if (this.cache != null) {
-                this.cache.store( slide_number, surface );
-            }
 
             return surface;
         }

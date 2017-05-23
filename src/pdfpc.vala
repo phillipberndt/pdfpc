@@ -42,17 +42,9 @@ namespace pdfpc {
         private PresentationController controller;
 
         /**
-         * CacheStatus widget, which coordinates all the information about
-         * cached slides to provide a visual feedback to the user about the
-         * rendering state
-         */
-        private CacheStatus cache_status;
-
-        /**
          * Commandline option parser entry definitions
          */
         const OptionEntry[] options = {
-            { "disable-cache", 'c', 0, 0, ref Options.disable_caching, "Disable caching and pre-rendering of slides to save memory at the cost of speed.", null },
             { "time-of-day", 'C', 0, 0, ref Options.use_time_of_day, "Use the current time of the day for the timer", null},
             { "duration", 'd', 0, OptionArg.INT, ref Options.duration, "Duration in minutes of the presentation used for timer display.", "N" },
             { "end-time", 'e', 0, OptionArg.STRING, ref Options.end_time, "End time of the presentation. (Format: HH:MM (24h))", "T" },
@@ -60,14 +52,12 @@ namespace pdfpc {
             { "last-minutes", 'l', 0, OptionArg.INT, ref Options.last_minutes, "Time in minutes, from which on the timer changes its color. (Default 5 minutes)", "N" },
             { "list-actions", 'L', 0, 0, ref Options.list_actions, "List actions supported in the config file(s)", null},
             { "notes", 'n', 0, OptionArg.STRING, ref Options.notes_position, "Position of notes on the pdf page (either left, right, top or bottom)", "P"},
-            { "persist-cache", 'p', 0, 0, ref Options.persist_cache, "Persist the PNG cache on disk for faster startup.", null },
             { "page", 'P', 0, OptionArg.INT, ref Options.page, "Goto a specific page directly after startup", "PAGE" },
             { "switch-screens", 's', 0, 0, ref Options.display_switch, "Switch the presentation and the presenter screen.", null },
             { "single-screen", 'S', 0, 0, ref Options.single_screen, "Force to use only one screen", null },
             { "start-time", 't', 0, OptionArg.STRING, ref Options.start_time, "Start time of the presentation to be used as a countdown. (Format: HH:MM (24h))", "T" },
             { "version", 'v', 0, 0, ref Options.version, "Print the version string and copyright statement", null },
             { "windowed", 'w', 0, 0, ref Options.windowed, "Run in windowed mode (devel tool)", null},
-            { "disable-compression", 'z', 0, 0, ref Options.disable_cache_compression, "Disable the compression of slide images to trade memory consumption for speed. (Avg. factor 30)", null },
             { "size", 'Z', 0, OptionArg.STRING, ref Options.size, "Size of the presentation window in width:height format (forces windowed mode)", null},
             { null }
         };
@@ -156,7 +146,6 @@ namespace pdfpc {
          */
         private Window.Presenter create_presenter(Metadata.Pdf metadata, int monitor) {
             var presenter = new Window.Presenter(metadata, monitor, this.controller);
-            presenter.set_cache_observer(this.cache_status);
 
             return presenter;
         }
@@ -167,7 +156,6 @@ namespace pdfpc {
          */
         private Window.Presentation create_presentation(Metadata.Pdf metadata, int monitor, int width = -1, int height = -1) {
             var presentation = new Window.Presentation(metadata, monitor, this.controller, width, height);
-            presentation.set_cache_observer(this.cache_status);
 
             return presentation;
         }
@@ -254,10 +242,9 @@ namespace pdfpc {
 
             var metadata = new Metadata.Pdf(GLib.Path.get_basename(pdfFilename));
 
-            // Initialize global controller and CacheStatus, to manage
-            // crosscutting concerns between the different windows.
+			// Initialize global controller, to manage crosscutting concerns
+			// between the different windows.
             this.controller = new PresentationController( metadata, Options.black_on_end );
-            this.cache_status = new CacheStatus();
 
             set_styling();
 
@@ -284,8 +271,7 @@ namespace pdfpc {
                 }
             }
 
-            // The windows are always displayed at last to be sure all caches have
-            // been created at this point.
+            // The windows are always displayed at last
             if (this.controller.presentation != null) {
                 this.controller.presentation.show_all();
                 this.controller.presentation.update();
